@@ -32,7 +32,7 @@ Fire Journey is a personal finance application designed to help users track thei
 
 4. Run the application:
     ```sh
-    python main.py
+    python PFM_app.py
     ```
 
 ## Dependencies
