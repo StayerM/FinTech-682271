@@ -15,8 +15,8 @@ Fire Journey is a personal finance application designed to help users track thei
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/your-username/fire-journey.git
-    cd fire-journey
+    git clone https://github.com/StayerM/FinTech-682271
+    cd FinTech-682271
     ```
 
 2. Create and activate a virtual environment:
