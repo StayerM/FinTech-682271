@@ -545,7 +545,6 @@ class FinanceApp(QWidget):
                 checkbox = self.remove_loan_table.cellWidget(row, 0)
                 if checkbox.isChecked():
                     loan_id = checkbox.property('loan_id')
-                    print(f"Removing loan with ID: {loan_id}")  # Debug print
                     if loan_id:
                         # Remove linked recurring records
                         self.c.execute('DELETE FROM recurring_records WHERE linked_loan = ?', (loan_id,))
@@ -1329,6 +1328,8 @@ class FinanceApp(QWidget):
             self.update_all()  # Update all relevant data
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+        finally:
+            dialog.deleteLater()  # Ensure dialog is deleted
 
     def toggle_remove_button(self):
         any_checked = any(self.records_table.cellWidget(row, 0).isChecked() for row in range(self.records_table.rowCount()))
@@ -1347,6 +1348,8 @@ class FinanceApp(QWidget):
             self.update_all()  # Update all relevant data
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+        finally:
+            dialog.deleteLater()  # Ensure dialog is deleted
 
     # FIRE calculation methods
     def calculate_fire(self):
