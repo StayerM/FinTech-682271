@@ -692,9 +692,9 @@ class FinanceApp(QWidget):
 
     # Graph and prediction methods
     def show_predict_expenses(self):
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Predict Expenses")
-        dialog.resize(400, 300)
+        self.predict_expenses_dialog = QDialog(self)
+        self.predict_expenses_dialog.setWindowTitle("Predict Expenses")
+        self.predict_expenses_dialog.resize(400, 300)
         layout = QVBoxLayout()
 
         prediction_periods = ["Next Day", "Next Week", "Next Month"]
@@ -703,17 +703,16 @@ class FinanceApp(QWidget):
         layout.addWidget(self.period_combobox)
 
         self.predict_button = QPushButton("Predict")
-        self.predict_button.clicked.connect(lambda: self.predict_expenses(dialog))
+        self.predict_button.clicked.connect(self.predict_expenses)
         layout.addWidget(self.predict_button)
 
-        self.result_label = QLabel("")
-        layout.addWidget(self.result_label)
+        self.result_label_prediction = QLabel("")
+        layout.addWidget(self.result_label_prediction)
 
-        dialog.setLayout(layout)
-        dialog.exec_()
-        dialog.deleteLater()  # Ensure dialog is deleted after closing
+        self.predict_expenses_dialog.setLayout(layout)
+        self.predict_expenses_dialog.exec_()
 
-    def predict_expenses(self, dialog):
+    def predict_expenses(self):
         period = self.period_combobox.currentText()
 
         if period == "Next Day":
@@ -751,14 +750,12 @@ class FinanceApp(QWidget):
 
             # Displaying the result
             total_expenses = predictions.sum()
-            self.result_label.setText(f"Predicted expenses for {period}:\n${total_expenses:.2f}")
-            self.result_label.setStyleSheet("font-size: 18px; font-weight: bold;")
-            self.result_label.setAlignment(Qt.AlignCenter)
+            self.result_label_prediction.setText(f"Predicted expenses for {period}:\n${total_expenses:.2f}")
+            self.result_label_prediction.setStyleSheet("font-size: 18px; font-weight: bold;")
+            self.result_label_prediction.setAlignment(Qt.AlignCenter)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
-        finally:
-            dialog.deleteLater()  # Ensure dialog is deleted after closing
 
     def show_graph(self):
         self.tab_widget.setCurrentWidget(self.graph_tab)
@@ -1391,6 +1388,7 @@ class FinanceApp(QWidget):
 
             self.result_label.setText(f"You can retire in <b>{years_to_retirement}</b> years.")
             self.result_label.setStyleSheet("font-size: 24px; text-align: center;")
+            self.result_label.adjustSize()
             self.plot_fire_growth(portfolio_values)
 
         except ValueError as ve:
