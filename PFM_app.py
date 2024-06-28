@@ -52,7 +52,7 @@ class FinanceApp(QWidget):
         super().__init__()
         self.setWindowTitle("Fire Journey")
         # Set the window icon
-        self.setWindowIcon(QIcon('applogo.png'))  # Replace 'path_to_icon/icon.png' with the path to your icon file
+        self.setWindowIcon(QIcon('applogo.png'))
         # Set the initial window size
         self.resize(1200, 800)
 
@@ -980,7 +980,7 @@ class FinanceApp(QWidget):
         dialog.exec_()
 
     def update_portfolio(self):
-        self.c.execute('SELECT UPPER(symbol), company_name, AVG(purchase_price) as avg_price, SUM(quantity) as total_quantity FROM portfolio WHERE user_id = ? GROUP BY UPPER(symbol), company_name', (self.user_id,))
+        self.c.execute('SELECT UPPER(symbol), company_name, SUM(purchase_price * quantity) / SUM(quantity) as avg_price, SUM(quantity) as total_quantity FROM portfolio WHERE user_id = ? GROUP BY UPPER(symbol), company_name', (self.user_id,))
         combined_stocks = self.c.fetchall()
         self.portfolio_table.setRowCount(len(combined_stocks))
 
