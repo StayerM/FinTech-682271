@@ -716,11 +716,14 @@ class FinanceApp(QWidget):
         period = self.period_combobox.currentText()
 
         if period == "Next Day":
-            days = 1
+            freq = 'D'
+            periods = 1
         elif period == "Next Week":
-            days = 7
+            freq = 'W'
+            periods = 1
         elif period == "Next Month":
-            days = 30
+            freq = 'ME'
+            periods = 1
 
         try:
             # Fetching past expense records, excluding Income and Investments
@@ -732,24 +735,55 @@ class FinanceApp(QWidget):
             df = pd.DataFrame(records, columns=['date', 'amount'])
             df['date'] = pd.to_datetime(df['date'])
             df.set_index('date', inplace=True)
-            df = df.resample('D').sum().fillna(0)
+
+            # Group by the appropriate frequency
+            if freq == 'D':
+                df = df.resample('D').sum().fillna(0)
+            elif freq == 'W':
+                df = df.resample('W').sum().fillna(0)
+            elif freq == 'ME':
+                df = df.resample('ME').sum().fillna(0)
+
+            # Ensure there are at least 4 observations
+            if len(df) < 4:
+                QMessageBox.warning(self, "Warning", "Not enough data to make a prediction. At least 4 observations are required.")
+                return
+
+            # Create lag features
+            df['lag_1'] = df['amount'].shift(1).fillna(0)
+            df['lag_2'] = df['amount'].shift(2).fillna(0)
+            df['lag_3'] = df['amount'].shift(3).fillna(0)
 
             # Preparing the data for the model
-            df['days'] = (df.index - df.index.min()).days
-            X = df[['days']]
-            y = df['amount']
+            X = df[['lag_1', 'lag_2', 'lag_3']].values
+            y = df['amount'].values
 
             # Training the model
             model = LinearRegression()
             model.fit(X, y)
 
             # Predicting expenses
-            last_day = df['days'].max()
-            future_days = pd.DataFrame({'days': range(last_day + 1, last_day + days + 1)})
-            predictions = model.predict(future_days)
+            last_known_index = df.index[-1]
+            future_dates = pd.date_range(start=last_known_index + pd.Timedelta(days=1), periods=periods, freq=freq)
+            future_days = pd.DataFrame(index=future_dates)
+            future_days['lag_1'] = df['amount'].iloc[-1]
+            future_days['lag_2'] = df['amount'].iloc[-2] if len(df) > 1 else 0
+            future_days['lag_3'] = df['amount'].iloc[-3] if len(df) > 2 else 0
+
+            predictions = []
+            for i in range(periods):
+                pred = model.predict(future_days.iloc[i].values.reshape(1, -1))[0]
+                pred = max(0, pred)  # Ensure predictions are not negative
+                predictions.append(pred)
+
+                # Update lag features for the next prediction
+                if i + 1 < periods:
+                    future_days.iloc[i + 1, future_days.columns.get_loc('lag_1')] = pred
+                    future_days.iloc[i + 1, future_days.columns.get_loc('lag_2')] = future_days.iloc[i, future_days.columns.get_loc('lag_1')]
+                    future_days.iloc[i + 1, future_days.columns.get_loc('lag_3')] = future_days.iloc[i, future_days.columns.get_loc('lag_2')]
 
             # Displaying the result
-            total_expenses = predictions.sum()
+            total_expenses = sum(predictions)
             self.result_label_prediction.setText(f"Predicted expenses for {period}:\n${total_expenses:.2f}")
             self.result_label_prediction.setStyleSheet("font-size: 18px; font-weight: bold;")
             self.result_label_prediction.setAlignment(Qt.AlignCenter)
