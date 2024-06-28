@@ -703,7 +703,7 @@ class FinanceApp(QWidget):
         layout.addWidget(self.period_combobox)
 
         self.predict_button = QPushButton("Predict")
-        self.predict_button.clicked.connect(self.predict_expenses)
+        self.predict_button.clicked.connect(lambda: self.predict_expenses(dialog))
         layout.addWidget(self.predict_button)
 
         self.result_label = QLabel("")
@@ -711,8 +711,9 @@ class FinanceApp(QWidget):
 
         dialog.setLayout(layout)
         dialog.exec_()
+        dialog.deleteLater()  # Ensure dialog is deleted after closing
 
-    def predict_expenses(self):
+    def predict_expenses(self, dialog):
         period = self.period_combobox.currentText()
 
         if period == "Next Day":
@@ -722,36 +723,42 @@ class FinanceApp(QWidget):
         elif period == "Next Month":
             days = 30
 
-        # Fetching past expense records, excluding Income and Investments
-        self.c.execute('''
-            SELECT date, amount FROM records 
-            WHERE user_id = ? AND type = "Expense" AND category != "Investments"
-        ''', (self.user_id,))
-        records = self.c.fetchall()
-        df = pd.DataFrame(records, columns=['date', 'amount'])
-        df['date'] = pd.to_datetime(df['date'])
-        df.set_index('date', inplace=True)
-        df = df.resample('D').sum().fillna(0)
+        try:
+            # Fetching past expense records, excluding Income and Investments
+            self.c.execute('''
+                SELECT date, amount FROM records 
+                WHERE user_id = ? AND type = "Expense" AND category != "Investments"
+            ''', (self.user_id,))
+            records = self.c.fetchall()
+            df = pd.DataFrame(records, columns=['date', 'amount'])
+            df['date'] = pd.to_datetime(df['date'])
+            df.set_index('date', inplace=True)
+            df = df.resample('D').sum().fillna(0)
 
-        # Preparing the data for the model
-        df['days'] = (df.index - df.index.min()).days
-        X = df[['days']]
-        y = df['amount']
+            # Preparing the data for the model
+            df['days'] = (df.index - df.index.min()).days
+            X = df[['days']]
+            y = df['amount']
 
-        # Training the model
-        model = LinearRegression()
-        model.fit(X, y)
+            # Training the model
+            model = LinearRegression()
+            model.fit(X, y)
 
-        # Predicting expenses
-        last_day = df['days'].max()
-        future_days = pd.DataFrame({'days': range(last_day + 1, last_day + days + 1)})
-        predictions = model.predict(future_days)
+            # Predicting expenses
+            last_day = df['days'].max()
+            future_days = pd.DataFrame({'days': range(last_day + 1, last_day + days + 1)})
+            predictions = model.predict(future_days)
 
-        # Displaying the result
-        total_expenses = predictions.sum()
-        self.result_label.setText(f"Predicted expenses for {period}:\n${total_expenses:.2f}")
-        self.result_label.setStyleSheet("font-size: 18px; font-weight: bold;")
-        self.result_label.setAlignment(Qt.AlignCenter)
+            # Displaying the result
+            total_expenses = predictions.sum()
+            self.result_label.setText(f"Predicted expenses for {period}:\n${total_expenses:.2f}")
+            self.result_label.setStyleSheet("font-size: 18px; font-weight: bold;")
+            self.result_label.setAlignment(Qt.AlignCenter)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+        finally:
+            dialog.deleteLater()  # Ensure dialog is deleted after closing
 
     def show_graph(self):
         self.tab_widget.setCurrentWidget(self.graph_tab)
