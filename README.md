@@ -56,6 +56,25 @@ Fire Journey is a personal finance application designed to help users track thei
 6. The **Assets and Loans** tab allows users to manage their assets and loans.
 7. The **FIRE Calculator** tab helps users calculate their retirement timeline based on their financial data.
 
+## Fake Data Maker
+
+To help with testing and development, a Fake Data Maker script is included. This script generates fake data for the `records`, `portfolio`, and `net_worth_history` tables without adding any assets, loans, or recurring records. 
+
+### Fake Data Maker Usage
+
+1. Ensure the SQLite database (`finance.db`) is set up.
+2. Run the Fake Data Maker script:
+    ```sh
+    python fake_data_maker.py
+    ```
+
+This script will:
+- Ensure the user "Maks" exists and retrieve their user ID.
+- Generate and insert 100 fake records into the `records` table.
+- Generate and insert 10 fake records into the `portfolio` table.
+- Generate and insert net worth history entries from January 2023 to June 2024.
+
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
