@@ -1047,8 +1047,8 @@ class FinanceApp(QWidget):
             self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Income"', (self.user_id,))
             total_income = self.c.fetchone()[0] or 0
 
-            # Fetch total expenses
-            self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Expense"', (self.user_id,))
+            # Fetch total expenses excluding those linked to loans
+            self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Expense" AND linked_loan IS NULL', (self.user_id,))
             total_expenses = self.c.fetchone()[0] or 0
 
             # Fetch total value of portfolio (current value)
