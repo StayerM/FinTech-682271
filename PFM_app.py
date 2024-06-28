@@ -842,7 +842,7 @@ class FinanceApp(QWidget):
     def remove_stock(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Remove Stock")
-        dialog.resize(800, 600)  # Adjust the size of the dialog window
+        dialog.resize(800, 600)
         layout = QVBoxLayout()
 
         self.c.execute('SELECT portfolio_id, UPPER(symbol), company_name, purchase_price, quantity, purchase_date FROM portfolio WHERE user_id = ?', (self.user_id,))
@@ -860,7 +860,7 @@ class FinanceApp(QWidget):
         for row, stock in enumerate(stocks):
             portfolio_id, symbol, company_name, purchase_price, quantity, purchase_date = stock
             checkbox = QCheckBox()
-            checkbox.setStyleSheet("margin:auto;")  # Center the checkbox
+            checkbox.setStyleSheet("margin:auto;")
             checkbox.setProperty('stock_id', portfolio_id)
             self.remove_stock_table.setCellWidget(row, 0, checkbox)
 
@@ -881,6 +881,7 @@ class FinanceApp(QWidget):
 
         dialog.setLayout(layout)
         dialog.exec_()
+        dialog.deleteLater()  # Ensure dialog is deleted after closing
 
     def confirm_remove_stock(self, dialog):
         try:
@@ -900,13 +901,15 @@ class FinanceApp(QWidget):
                         category = "Investments"
                         record_type = "Income" if pl >= 0 else "Expense"
                         self.c.execute('INSERT INTO records (user_id, date, category, type, amount) VALUES (?, ?, ?, ?, ?)',
-                                       (self.user_id, datetime.datetime.now().date(), category, record_type, abs(pl)))
+                                    (self.user_id, datetime.datetime.now().date(), category, record_type, abs(pl)))
             self.conn.commit()
             QMessageBox.information(self, "Success", "Selected stocks removed")
             dialog.close()
             self.update_all()  # Update all relevant data
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+        finally:
+            dialog.deleteLater()  # Ensure dialog is deleted
         
 
     def save_stock(self, dialog, inputs):
