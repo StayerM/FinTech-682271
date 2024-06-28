@@ -1040,6 +1040,8 @@ class FinanceApp(QWidget):
             label.setAlignment(Qt.AlignCenter)
             self.portfolio_tab.layout().insertWidget(self.portfolio_tab.layout().count() - 5, label)  # Insert above the buttons
 
+        self.update_fire_values()  # Update FIRE values after updating the portfolio
+
     # Net worth methods
     def update_net_worth(self):
         try:
@@ -1475,6 +1477,34 @@ class FinanceApp(QWidget):
                 annual_income += amount
 
         return portfolio_value, annual_income
+    
+    def update_fire_values(self):
+        try:
+            portfolio_value = self.current_portfolio_value
+
+            # Get annual income from recurring records with category "Paycheck"
+            self.c.execute('''
+                SELECT amount, frequency FROM recurring_records 
+                WHERE user_id = ? AND category = "Paycheck"
+            ''', (self.user_id,))
+            recurring_income_records = self.c.fetchall()
+            annual_income = 0
+            for amount, frequency in recurring_income_records:
+                if frequency == 'Daily':
+                    annual_income += amount * 365
+                elif frequency == 'Weekly':
+                    annual_income += amount * 52
+                elif frequency == 'Monthly':
+                    annual_income += amount * 12
+                elif frequency == 'Annual':
+                    annual_income += amount
+
+            self.portfolio_value_input.setText(str(portfolio_value))
+            self.annual_income_input.setText(str(annual_income))
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
 
     def update_annual_expenses(self):
         try:
