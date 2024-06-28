@@ -546,6 +546,8 @@ class FinanceApp(QWidget):
                     loan_id = checkbox.property('loan_id')
                     # Remove linked recurring records
                     self.c.execute('DELETE FROM recurring_records WHERE linked_loan = ?', (loan_id,))
+                    # Remove associated records in the main records table
+                    self.c.execute('DELETE FROM records WHERE linked_loan = ?', (loan_id,))
                     # Reset principal and interest
                     self.c.execute('UPDATE loans SET principal = 0, interest = 0 WHERE loan_id = ?', (loan_id,))
                     self.c.execute('DELETE FROM loans WHERE loan_id = ?', (loan_id,))
@@ -1040,11 +1042,11 @@ class FinanceApp(QWidget):
     def update_net_worth(self):
         try:
             # Fetch total income
-            self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Income" AND rowid NOT IN (SELECT record_id FROM recurring_records WHERE user_id = ?)', (self.user_id, self.user_id))
+            self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Income"', (self.user_id, self.user_id))
             total_income = self.c.fetchone()[0] or 0
 
             # Fetch total expenses
-            self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Expense" AND rowid NOT IN (SELECT record_id FROM recurring_records WHERE user_id = ?)', (self.user_id, self.user_id))
+            self.c.execute('SELECT SUM(amount) FROM records WHERE user_id = ? AND type="Expense"', (self.user_id, self.user_id))
             total_expenses = self.c.fetchone()[0] or 0
 
             # Fetch total value of portfolio (current value)
@@ -1301,6 +1303,9 @@ class FinanceApp(QWidget):
                         initial_principal = self.c.fetchone()[0]
                         self.c.execute('UPDATE loans SET principal = ?, interest = 0 WHERE loan_id = ?', (initial_principal, linked_loan))
                         self.c.execute('DELETE FROM loan_repayment WHERE loan_id = ?', (linked_loan,))
+
+                    # Delete associated records in the main records table
+                    self.c.execute('DELETE FROM records WHERE linked_loan = ?', (linked_loan,))
 
                     # Delete the recurring record
                     self.c.execute('DELETE FROM recurring_records WHERE id = ?', (record_id,))
