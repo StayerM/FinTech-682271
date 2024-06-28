@@ -1056,7 +1056,7 @@ class FinanceApp(QWidget):
                 current_price = self.get_stock_info(symbol)[1]
                 total_portfolio_value += current_price * total_quantity
 
-            # Fetch total value of assets
+            # Fetch total value of assets   
             self.c.execute('SELECT SUM(purchase_price) FROM assets WHERE user_id = ?', (self.user_id,))
             total_assets_value = self.c.fetchone()[0] or 0
 
@@ -1371,14 +1371,14 @@ class FinanceApp(QWidget):
             QMessageBox.critical(self, "Error", str(e))
 
     def calculate_years_to_retirement(self, portfolio_value, annual_income, savings_rate, income_growth_rate,
-                                      income_growth_duration, annual_expenses, withdrawal_rate, annual_roi,
-                                      include_loan_expenses):
+                                    income_growth_duration, annual_expenses, withdrawal_rate, annual_roi,
+                                    include_loan_expenses):
         years = 0
         portfolio_values = [portfolio_value]
 
         if include_loan_expenses:
             # Load loan data
-            self.c.execute('SELECT id, principal, interest, interest_rate FROM loans WHERE user_id = ?', (self.user_id,))
+            self.c.execute('SELECT loan_id, principal, interest, interest_rate FROM loans WHERE user_id = ?', (self.user_id,))
             loans = self.c.fetchall()
             loan_details = {loan[0]: {'principal': loan[1], 'interest': loan[2], 'interest_rate': loan[3]} for loan in loans}
         else:
@@ -1399,7 +1399,7 @@ class FinanceApp(QWidget):
 
                     # Get the recurring expense for this loan
                     self.c.execute('SELECT amount, frequency FROM recurring_records WHERE user_id = ? AND linked_loan = ?',
-                                   (self.user_id, loan_id))
+                                (self.user_id, loan_id))
                     recurring_record = self.c.fetchone()
                     if recurring_record:
                         amount, frequency = recurring_record
