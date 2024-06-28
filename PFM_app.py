@@ -141,6 +141,7 @@ class FinanceApp(QWidget):
         self.update_assets_table()
         self.update_net_worth()
         self.update_loans_table()
+        self.update_fire_values()
 
     # Tab setup methods
     def setup_graph_tab(self):
@@ -906,6 +907,7 @@ class FinanceApp(QWidget):
             self.update_all()  # Update all relevant data
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+        
 
     def save_stock(self, dialog, inputs):
         try:
